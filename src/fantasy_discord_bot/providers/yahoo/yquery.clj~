@@ -1,6 +1,0 @@
-(ns fantasy-discord-bot.providers.yahoo.yquery
-  (:require [fantasy-discord-bot.providers.yahoo.query :as q]))
-
-(defn get-standings
-  [sport league-id]
-  (fn [auth] "standings"))
