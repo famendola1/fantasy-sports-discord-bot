@@ -1,0 +1,11 @@
+(ns fantasy-discord-bot.providers.yahoo.yahoo
+  (:require [fantasy-discord-bot.providers.yahoo.nba :as nba]))
+
+(defn configure-auth
+  [config])
+
+(defmulti init-provider :sport)
+
+(defmethod init-provider :nba
+  [config]
+  (nba/init-provider (configure-auth config)))

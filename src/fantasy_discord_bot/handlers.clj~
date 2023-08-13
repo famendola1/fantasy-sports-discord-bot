@@ -1,0 +1,3 @@
+(ns fantasy-discord-bot.handlers)
+
+(defn handle-event)

@@ -1,0 +1,75 @@
+(ns fantasy-discord-bot.providers.yahoo.query
+  (:require [fantasy-discord-bot.providers.yahoo.oauth :as oauth]))
+
+(derive clojure.lang.IPersistentList ::list)
+(derive clojure.lang.Cons ::list)
+(derive clojure.lang.IPersistentVector ::list)
+
+(defmethod url-form
+  clojure.lang.IPersistentSet
+  [form]
+  (join "," (map url-form form)))
+
+(defmethod url-form
+  ::list
+  [form]
+  (let [[resource p-map] form] 
+    (combine (name resource) p-map)))
+
+(defmethod url-form
+  :default
+  [form]
+  (as-str form))
+
+(defmacro query
+  [url & resources]
+  (let [[urls q-maps] (split-with url-part? resources)
+        [k q-map] (first q-maps)
+        url-vec (vec urls)
+        url-keys (if (seq q-maps) 
+                   (conj url-vec (remove-star k)) 
+                   url-vec)] 
+    `(vector (join "/" (cons ~url (map url-form (list ~@url-keys))))
+             ~q-map)))
+
+(defn- remove-star
+  [k]
+  (let [s (name k)
+        k-str (apply str (take-while #(not (= \* %)) s))]
+    (keyword k-str)))
+
+(defn- url-part?  
+  [x] 
+  (or (keyword? x) 
+      (and (coll? x) 
+           (not (= \* (-> x first name last))))))
+
+(defn- combine
+  [resource p-map]
+  (let [params (for [[k v] p-map]
+                 (str (url-form k) "=" (url-form v)))]
+    (apply str resource \; (join \; params))))
+
+(defn ask 
+  "Make a Yahoo query or a query function"
+  ([auth q-info] ((ask q-info) auth))
+  ([[url url-map]] 
+   (fn [auth]
+     (let [acc-tok (:token auth)
+           credentials (oauth/credentials (:consumer auth)
+                                          (:oauth_token acc-tok) 
+                                          (:oauth_token_secret acc-tok) 
+                                          :GET 
+                                          url 
+                                          url-map)
+           q (http/encode-query (merge credentials url-map))]
+       (parse (str url "?" q))))))
+
+(defmacro with-oauth
+  "Runs query with the oauth credentials in auth, which will be automatically
+  refreshed if it has expired (side effect)."
+  [auth query]
+  `(do
+     (when (expired? ~auth)
+       (def ~auth (refresh ~auth)))
+     (~query ~auth)))
