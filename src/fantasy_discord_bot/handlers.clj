@@ -3,8 +3,8 @@
             [discljord.messaging :as m]
             [fantasy-discord-bot.providers.providers :as providers]))
 
-(def command-regex #"^!(?<cmd>\w+) ?(?<args>.*)")
-(def allowed-commands #{:standings :scoreboard})
+(def command-regex #"^!(?<cmd>\w+)\s+?(?<args>.*)")
+(def allowed-commands #{:standings :scoreboard :schedule :vs})
 
 (defn- render
   "Renders the given content as a string."
@@ -32,7 +32,7 @@
   [state provider]
   (fn [event-type {{bot :bot} :author :keys [channel-id content]}]
     (when-not bot
-      (when-let [cmd (parse-content content)]
+      (when-let [cmd (parse-message content)]
         (if (allowed-commands (:cmd cmd))
           (m/create-message! (:messaging state)
                              channel-id

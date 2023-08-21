@@ -1,5 +1,6 @@
 (ns fantasy-discord-bot.providers.yahoo.yquery
-  (:require [fantasy-discord-bot.providers.yahoo.query :as q]))
+  (:require [clojure.string :as s]
+            [fantasy-discord-bot.providers.yahoo.query :as q]))
 
 (def YAHOO_FANTASY_API_ENDPOINT
   "https://fantasysports.yahooapis.com/fantasy/v2" )
@@ -31,3 +32,43 @@
                           (if-not (nil? week)
                             [:scoreboard {:week week}]
                             :scoreboard))))))
+
+(defn get-teams-matchups
+  "Queries Yahoo's fantasy API for the every teams' matchups for the season."
+  [game league-id]
+  (fn [auth]
+    (q/ask auth (q/query YAHOO_FANTASY_API_ENDPOINT
+                         :league
+                         (keyword (mk-league-key game league-id))
+                         :teams
+                         :matchups))))
+
+(defn- stat-type->request-param
+  [type]
+  (if (s/starts-with? type "average_")
+    (keyword (s/replace-first type #"average_" ""))
+    (keyword type)))
+
+(defn get-teams-stats
+  "Queries Yahoo's fantasy API for all teams stats of the given type and
+  durations, if specified.
+
+  Valid types: week, lastweek, lastmonth, average_lastweek, average_lastmonth,
+  date, season, average_season"
+  ([game league-id]
+   (get-teams-stats game league-id nil nil))
+  ([game league-id type]
+   (get-teams-stats game league-id type 0))
+  ([game league-id type duration]
+   (fn [auth]
+     (q/ask auth (q/query YAHOO_FANTASY_API_ENDPOINT
+                          :league
+                          (keyword (mk-league-key game league-id))
+                          :teams
+                          (cond (and type duration)
+                                [:stats {:type type
+                                         (stat-type->request-param type) duration}]
+                                (not (nil? type))
+                                [:stats {:type type}]
+                                :else
+                                :stats))))))
