@@ -3,7 +3,7 @@
             [discljord.messaging :as m]
             [fantasy-discord-bot.providers.providers :as providers]))
 
-(def command-regex #"^!(?<cmd>\w+)\s+?(?<args>.*)")
+(def command-regex #"^!(?<cmd>\w+)\s*(?<args>.*)")
 (def allowed-commands #{:standings :scoreboard :schedule :vs})
 
 (defn- render

@@ -39,9 +39,9 @@
   (format "%2d: %s (%d-%d-%d)"
           (get-in team [:team :team_standings :rank])
           (get-in team [:team :name])
-          (get-in team [:team :team_standings :wins])
-          (get-in team [:team :team_standings :losses])
-          (get-in team [:team :team_standings :ties])))
+          (get-in team [:team :team_standings :wins] 0)
+          (get-in team [:team :team_standings :losses] 0)
+          (get-in team [:team :team_standings :ties] 0)))
 
 (defn- format-matchup
   "Format a matchup into a string."
@@ -144,6 +144,7 @@
 
 (defmethod handle-command :standings
   [sport league-id auth _]
+  (println sport league-id)
   (let [resp ((yq/get-standings (name sport) league-id) auth)]
     {:header "Standings"
      :body (->> (get-in resp [:fantasy_content :league :standings :teams])
