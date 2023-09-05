@@ -1,44 +1,46 @@
-# fantasy-discord-bot
+# Fantasy Sports Discord Bot
 
-FIXME: description
+A Discord bot for fantasy sports
 
-## Installation
+## Supported Platforms
 
-Download from http://example.com/FIXME.
+* Yahoo!
 
-## Usage
+## Before You Start
 
-FIXME: explanation
+Before you start you will need to register an app as a developer for Discord
+and Yahoo Fantasy.
 
-    $ java -jar fantasy-discord-bot-0.1.0-standalone.jar [args]
+* [Discord](https://www.upwork.com/resources/how-to-make-discord-bot)
+  * You'll need to save the Token for your bot
+* [Yahoo Fantasy](https://developer.yahoo.com/apps/create/)
+  * You'll need to save the consumer key and secret
 
-## Options
+## Authorization
 
-FIXME: listing of options this app accepts.
+This part is quite advanced. For Yahoo, you need to acquire the access token and
+refresh token by going through their [OAuth](https://developer.yahoo.com/oauth2/guide/)
+flow. This is needed to access information from Yahoo.
 
-## Examples
+## Configuration
 
-...
+The bot is configured with an [EDN](https://github.com/edn-format/edn) file,
+whose path is passed to the the bot via the command line. Below is an example
+configuration for Yahoo:
 
-### Bugs
+```clojure
+{:discord {:token ""}
+ :provider {:type :yahoo
+ 	    :sport :nba
+	    :league-id 0
+	    :auth {:client-id ""
+	    	   :client-secret ""
+	    	   :access-token ""
+		   :refresh-token ""
+		   :token-type "bearer"}}}
+```
 
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
-
-## License
-
-Copyright © 2023 FIXME
-
-This program and the accompanying materials are made available under the
-terms of the Eclipse Public License 2.0 which is available at
-http://www.eclipse.org/legal/epl-2.0.
-
-This Source Code may also be made available under the following Secondary
-Licenses when the conditions for such availability set forth in the Eclipse
-Public License, v. 2.0 are satisfied: GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or (at your
-option) any later version, with the GNU Classpath Exception which is available
-at https://www.gnu.org/software/classpath/license.html.
+## Running the bot locally
+```bash
+lein run --config=<path to config>
+```

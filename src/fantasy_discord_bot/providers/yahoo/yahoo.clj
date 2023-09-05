@@ -3,7 +3,9 @@
             [fantasy-discord-bot.providers.yahoo.constants :as c]
             [fantasy-discord-bot.providers.yahoo.yquery :as yq]))
 
-(defmulti calculate-matchup-result (fn [sport _ _] sport))
+(defmulti calculate-matchup-result
+  "Calculates the result of a matchup based on each team's stats."
+  (fn [sport _ _] sport))
 
 (defmethod calculate-matchup-result :nba
   [_ home-team away-team]
@@ -63,6 +65,7 @@
 
 (defn- format-matchup-result
   [team matchup]
+  "Formats a single matchup from Yahoo."
   (let [result (cond (get-in matchup [:matchup :is_tied])
                      "T"
                      (= (get-in team [:team :team_key])
@@ -86,6 +89,7 @@
               (get-in (second (:teams (:matchup matchup))) [:team :name])))))
 
 (defn- format-matchup-results
+  "Formats the results of matchup data from Yahoo."
   [team]
   (let [results (reduce (fn [res matchup]
                           (if (= (get-in matchup [:matchup :status])
@@ -109,6 +113,7 @@
                  (results "T")))))
 
 (defn- format-result
+  "Formats a result of single calculated matchup"
   [home-team-name [away-team-name result]]
   (format "%s (%.2f)\n%s (%.2f)\n"
           home-team-name
@@ -117,6 +122,7 @@
           (float (:loss result))))
 
 (defn- format-vs-league-matchups
+  "Formats matchups for the !vs command."
   [sport team other-teams]
   (let [results (map (partial calculate-matchup-result sport team) other-teams)
         win (count (filter #(> (:win %) (:loss %)) results))
@@ -127,16 +133,14 @@
               (s/join "\n"))
          (format "\nTotal: %d-%d-%d" win lost tied))))
 
-(defn- mk-error-msg
+(defn- format-error-message
   [message]
   {:header "A problem occurred"
    :body message})
 
 (defn- find-team-by-name
   [teams team-name]
-  (first (filter #(= team-name
-                     (:name (:team %)))
-                 teams)))
+  (first (filter #(= team-name (:name (:team %))) teams)))
 
 (defmulti handle-command
   "Hanlder for commands for the Yahoo provider."
@@ -144,7 +148,6 @@
 
 (defmethod handle-command :standings
   [sport league-id auth _]
-  (println sport league-id)
   (let [resp ((yq/get-standings (name sport) league-id) auth)]
     {:header "Standings"
      :body (->> (get-in resp [:fantasy_content :league :standings :teams])
@@ -159,7 +162,7 @@
                      (yq/get-scoreboard (name sport) league-id))
         resp (query-func auth)]
     (if (seq (:error resp))
-      (mk-error-msg (:description resp))
+      (format-error-message (:description resp))
       {:header (str "Week "                  
                     (get-in resp [:fantasy_content :league :scoreboard :week])
                     " Scoreboard")
@@ -173,8 +176,8 @@
         resp ((yq/get-teams-matchups (name sport) league-id) auth)
         teams (get-in resp [:fantasy_content :league :teams])
         team (find-team-by-name teams team-name)]
-    (cond (seq (:error resp)) (mk-error-msg (get-in resp [:error :description]))
-          (nil? team) (mk-error-msg (format "team \"%s\" not found", team-name))
+    (cond (seq (:error resp)) (format-error-message (get-in resp [:error :description]))
+          (nil? team) (format-error-message (format "team \"%s\" not found", team-name))
           :else {:header (str team-name " Schedule")
                  :body (format-matchup-results team)})))
 
@@ -184,8 +187,8 @@
         resp ((yq/get-teams-stats (name sport) league-id "week") auth)
         teams (get-in resp [:fantasy_content :league :teams])
         team (find-team-by-name teams team-name)]
-    (cond (seq (:error resp)) (mk-error-msg (get-in resp [:error :description]))
-          (nil? team) (mk-error-msg (format "team \"%s\" not found", team-name))
+    (cond (seq (:error resp)) (format-error-message (get-in resp [:error :description]))
+          (nil? team) (format-error-message (format "team \"%s\" not found", team-name))
           :else {:header (str team-name " vs. The League")
                  :body (format-vs-league-matchups
                         sport
