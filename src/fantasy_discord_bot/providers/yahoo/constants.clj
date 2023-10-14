@@ -28,3 +28,28 @@
 
 (def nba-inverse-stats
   #{19})
+
+(def nba-roster-order
+  {"PG" 0
+   "SG" 1
+   "G" 2
+   "SF" 3
+   "PF" 4
+   "F" 5
+   "C" 6
+   "Util" 7
+   "BN" 8
+   "IL" 9
+   "IL+" 10})
+
+(def nfl-roster-order
+  {"QB" 0
+   "WR" 1
+   "RB" 2
+   "TE" 3
+   "W/R" 4
+   "W/R/T" 5
+   "K" 6
+   "DEF" 7
+   "BN" 8
+   "IR" 9})

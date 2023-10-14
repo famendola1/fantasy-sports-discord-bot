@@ -72,3 +72,12 @@
                                 [:stats {:type type}]
                                 :else
                                 :stats))))))
+
+(defn get-teams-rosters
+  "Queries Yahoo's fantasy API for all teams' rosters."
+  [game league-id]
+  (q/ask (q/query YAHOO_FANTASY_API_ENDPOINT
+                  :league
+                  (keyword (mk-league-key game league-id))
+                  :teams
+                  :roster)))

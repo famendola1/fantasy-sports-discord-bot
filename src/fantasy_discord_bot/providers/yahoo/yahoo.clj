@@ -133,6 +133,32 @@
               (s/join "\n"))
          (format "\nTotal: %d-%d-%d" win lost tied))))
 
+(defn- get-player-roster-order
+  [roster-order player]
+  (get roster-order
+       (get-in player [:player :selected_position :position])
+       100))
+
+(defn- format-roster-entry
+  [player]
+  (format "%s: %s"
+          (get-in player [:player :selected_position :position])
+          (get-in player [:player :name :full])))
+
+(defmulti format-team-roster (fn [sport _] sport))
+
+(defmethod format-team-roster :nba
+  [sport team]
+  (let [players (get-in team [:team :roster :players])
+        sorted-players (sort-by (partial get-player-roster-order c/nba-roster-order) players)]
+    (s/join "\n" (map format-roster-entry sorted-players))))
+
+(defmethod format-team-roster :nfl
+  [sport team]
+  (let [players (get-in team [:team :roster :players])
+        sorted-players (sort-by (partial get-player-roster-order c/nfl-roster-order) players)]
+    (s/join "\n" (map format-roster-entry sorted-players))))
+
 (defn- format-error-message
   [message]
   {:header "A problem occurred"
@@ -149,10 +175,12 @@
 (defmethod handle-command :standings
   [sport league-id auth _]
   (let [resp ((yq/get-standings (name sport) league-id) auth)]
-    {:header "Standings"
-     :body (->> (get-in resp [:fantasy_content :league :standings :teams])
-                (map format-team-standings)
-                (s/join "\n"))}))
+    (if (seq (:error resp))
+      (format-error-message (get-in resp [:error :description]))
+      {:header "Standings"
+       :body (->> (get-in resp [:fantasy_content :league :standings :teams])
+                  (map format-team-standings)
+                  (s/join "\n"))})))
 
 (defmethod handle-command :scoreboard
   [sport league-id auth cmd]
@@ -162,7 +190,7 @@
                      (yq/get-scoreboard (name sport) league-id))
         resp (query-func auth)]
     (if (seq (:error resp))
-      (format-error-message (:description resp))
+      (format-error-message (get-in resp [:error :description]))
       {:header (str "Week "                  
                     (get-in resp [:fantasy_content :league :scoreboard :week])
                     " Scoreboard")
@@ -187,13 +215,24 @@
         resp ((yq/get-teams-stats (name sport) league-id "week") auth)
         teams (get-in resp [:fantasy_content :league :teams])
         team (find-team-by-name teams team-name)]
-    (cond (seq (:error resp)) (format-error-message (get-in resp [:error :description]))
-          (nil? team) (format-error-message (format "team \"%s\" not found", team-name))
+    (cond (nil? team) (format-error-message (format "team \"%s\" not found", team-name))
+          (seq (:error resp)) (format-error-message (get-in resp [:error :description]))
           :else {:header (str team-name " vs. The League")
                  :body (format-vs-league-matchups
                         sport
                         team
                         (remove #(= team-name (get-in % [:team :name])) teams))})))
+
+(defmethod handle-command :roster
+  [sport league-id auth cmd]
+  (let [team-name (s/trim (:args cmd))
+        resp ((yq/get-teams-rosters (name sport) league-id) auth)
+        teams (get-in resp [:fantasy_content :league :teams])
+        team (find-team-by-name teams team-name)]
+    (cond (nil? team) (format-error-message (format "team \"%s\" not found", team-name))
+          (seq (:error resp)) (format-error-message (get-in resp [:error :description]))
+          :else {:header team-name
+                 :body (format-team-roster sport team)})))
 
 (defn init-provider
   "Initializes the Yahoo provider for handling commands the bot receives."
