@@ -4,7 +4,7 @@
             [fantasy-discord-bot.providers.providers :as providers]))
 
 (def command-regex #"^!(?<cmd>\w+)\s*(?<args>.*)")
-(def allowed-commands #{:help :standings :scoreboard :schedule :vs :roster})
+(def allowed-commands #{:help :standings :scoreboard :schedule :vs :roster :leaders})
 (def help-message
   "```
 Fantasy Sports Discord Bot
@@ -12,6 +12,9 @@ Fantasy Sports Discord Bot
 
 !help
 Returns this message.
+
+!leaders
+Returns a list of the best performing fantasy players for the current day.
 
 !roster <team>
 Returns the roster of the given team.

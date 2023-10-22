@@ -5,6 +5,7 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[clj-http "3.12.3"]
                  [clj-oauth2 "0.2.0"]
+                 [clj-time "0.15.2"]
                  [com.github.discljord/discljord "1.3.1"]
                  [org.apache.httpcomponents/httpclient "4.5.3"]
                  [org.clojure/clojure "1.11.1"]

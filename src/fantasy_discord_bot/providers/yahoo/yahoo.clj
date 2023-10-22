@@ -1,5 +1,7 @@
 (ns fantasy-discord-bot.providers.yahoo.yahoo
-  (:require [clojure.string :as s]
+  (:require [clj-time.core :as t]
+            [clj-time.format :as f]
+            [clojure.string :as s]
             [fantasy-discord-bot.providers.yahoo.constants :as c]
             [fantasy-discord-bot.providers.yahoo.yquery :as yq]))
 
@@ -234,11 +236,47 @@
           :else {:header team-name
                  :body (format-team-roster sport team)})))
 
+(defn- get-leaders-for-stat
+  [sport stat date auth]
+  (let [resp ((yq/get-stat-category-leaders sport stat date 5) auth)
+        players (get-in resp [:fantasy_content :game :players])
+        leaders (map (fn [p]
+                       {:name (get-in p [:player :name :full])
+                        :position (get-in p [:player :display_position])
+                        :value (first (filter #(= (str stat) (get-in % [:stat :stat_id])) (get-in p [:player :player_stats :stats])))})
+                     players)]
+    {:stat (c/stat-id-to-name stat)
+     :leaders leaders}))
+
+(defn format-leaders
+  [leaders]
+  (format "%s\n%s\n%s\n"
+          (:stat leaders)
+          (apply str (repeat (count (:stat leaders)) "-"))
+          (s/join "\n"
+                  (map #(format "%s - %s" (:name %) (str (or (:value %) 0)))
+                       (:leaders leaders)))))
+
+(defmulti get-leaders (fn [sport _ _] sport))
+
+(defmethod get-leaders :nba
+  [sport date auth]
+  (map #(get-leaders-for-stat sport % date auth) c/nba-9cat-ids))
+
+(defmethod handle-command :leaders
+  [sport _ auth cmd]
+  (let [date (f/unparse (f/formatter "yyyy-MM-dd") (t/now))
+        leaders (get-leaders sport date auth)]
+    (if (some nil? leaders)
+      (format-error-message "Unable to compute stats leaders.")
+      {:header (format "Leaders - %s" date)
+       :body (s/join "\n" (map format-leaders leaders))})))
+
 (defn init-provider
-  "Initializes the Yahoo provider for handling commands the bot receives."
-  [config]
-  (fn [cmd]
-    (handle-command (:sport config)
-                    (:league-id config)
-                    (:auth config)
-                    cmd)))
+"Initializes the Yahoo provider for handling commands the bot receives."
+[config]
+(fn [cmd]
+  (handle-command (:sport config)
+                  (:league-id config)
+                  (:auth config)
+                  cmd)))

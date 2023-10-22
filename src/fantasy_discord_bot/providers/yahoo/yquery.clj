@@ -81,3 +81,12 @@
                   (keyword (mk-league-key game league-id))
                   :teams
                   :roster)))
+
+(defn get-stat-category-leaders
+  [game stat-id date limit]
+  (q/ask (q/query YAHOO_FANTASY_API_ENDPOINT
+                  :game
+                  (keyword game)
+                  [:players {:sort stat-id
+                             :sort_date date
+                             :count limit}])))
