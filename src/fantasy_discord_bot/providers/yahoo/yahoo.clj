@@ -77,16 +77,16 @@
                      "L")]
     (condp = (get-in matchup [:matchup :status])
       "postevent"
-      (format "%2s: %s %s\n"
+      (format "%2s: %s %s"
               (get-in matchup [:matchup :week])
               (get-in (second (:teams (:matchup matchup))) [:team :name])
               result)
       "midevent"
-      (format "%2s: *%s*\n"
+      (format "%2s: *%s*"
               (get-in matchup [:matchup :week])
               (get-in (second (:teams (:matchup matchup))) [:team :name]))
       "preevent"
-      (format "%2s: %s\n"
+      (format "%2s: %s"
               (get-in matchup [:matchup :week])
               (get-in (second (:teams (:matchup matchup))) [:team :name])))))
 
@@ -206,10 +206,12 @@
         resp ((yq/get-teams-matchups (name sport) league-id) auth)
         teams (get-in resp [:fantasy_content :league :teams])
         team (find-team-by-name teams team-name)]
-    (cond (seq (:error resp)) (format-error-message (get-in resp [:error :description]))
-          (nil? team) (format-error-message (format "team \"%s\" not found", team-name))
-          :else {:header (str team-name " Schedule")
-                 :body (format-matchup-results team)})))
+    (cond
+      (not (seq team-name)) (format-error-message "must provide a team name")
+      (seq (:error resp)) (format-error-message (get-in resp [:error :description]))
+      (nil? team) (format-error-message (format "team \"%s\" not found", team-name))
+      :else {:header (str team-name " Schedule")
+             :body (format-matchup-results team)})))
 
 (defmethod handle-command :vs
   [sport league-id auth cmd]
