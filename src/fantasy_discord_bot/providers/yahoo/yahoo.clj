@@ -11,16 +11,20 @@
 
 (defmethod calculate-matchup-result :nba
   [_ home-team away-team]
-  (let [home-stats (filter #(c/nba-9cat-ids (Integer/parseInt (:stat_id (:stat %))))
-                           (get-in home-team [:team :team_stats :stats]))
-        away-stats (filter #(c/nba-9cat-ids (Integer/parseInt (:stat_id (:stat %))))
-                           (get-in away-team [:team :team_stats :stats]))
+  (let [home-stats (sort-by
+                    (comp :stat_id :stat)
+                    (filter #(c/nba-9cat-ids (Integer/parseInt (:stat_id (:stat %))))
+                            (get-in home-team [:team :team_stats :stats])))
+        away-stats (sort-by
+                    (comp :stat_id :stat)
+                    (filter #(c/nba-9cat-ids (Integer/parseInt (:stat_id (:stat %))))
+                            (get-in away-team [:team :team_stats :stats])))
         stat-pairs (map vector home-stats away-stats)]
     (reduce (fn [res [home away]]
               (let [home-val (Float/parseFloat (get-in home [:stat :value]))
                     away-val (Float/parseFloat (get-in away [:stat :value]))]
                 (cond
-                  (c/nba-inverse-stats (:stat_id (:stat home)))
+                  (c/nba-inverse-stats (Integer/parseInt (:stat_id (:stat home))))
                   (cond (> home-val away-val) (update res :loss inc)
                         (< home-val away-val) (update res :win inc)
                         :else (update res :tie inc))
