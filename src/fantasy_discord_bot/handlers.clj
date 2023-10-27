@@ -22,7 +22,7 @@ Returns the roster of the given team.
 !schedule <team>
 Returns season schedule of the provided team.
 
-!scoreboard <week>
+!scoreboard [week]
 Returns the scoreboard of the given week. If no week is provided, returns the current scoreboard.
 
 !standings
