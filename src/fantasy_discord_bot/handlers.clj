@@ -31,6 +31,9 @@ Returns the current league standings.
 
 !vs [week] <team>
 Returns the matchups results of the provided team against all other teams in the league. If week is not provided, the current week is used.
+
+!transactions
+Returns the 10 most recent add/drop transactions.
 ```")
 
 (defn- render
