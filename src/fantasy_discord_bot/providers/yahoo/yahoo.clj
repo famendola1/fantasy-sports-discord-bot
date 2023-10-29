@@ -260,7 +260,9 @@
           (:stat leaders)
           (apply str (repeat (count (:stat leaders)) "-"))
           (s/join "\n"
-                  (map #(format "%s - %s" (:name %) (str (or (:value %) 0)))
+                  (map #(format "%s - %s"
+                                (:name %)
+                                (str (get-in % [:value :stat :value] 0)))
                        (:leaders leaders)))))
 
 (defmulti get-leaders (fn [sport _ _] sport))

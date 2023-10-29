@@ -83,10 +83,13 @@
                   :roster)))
 
 (defn get-stat-category-leaders
-  [game stat-id date limit]
+  [game stat-id date limit]  
   (q/ask (q/query YAHOO_FANTASY_API_ENDPOINT
                   :game
                   (keyword game)
                   [:players {:sort stat-id
+                             :sort_type "date"
                              :sort_date date
-                             :count limit}])))
+                             :count limit}]
+                  [:stats {:type "date"
+                           :date date}])))
