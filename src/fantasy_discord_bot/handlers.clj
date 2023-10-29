@@ -4,7 +4,8 @@
             [fantasy-discord-bot.providers.providers :as providers]))
 
 (def command-regex #"^!(?<cmd>\w+)\s*(?<args>.*)")
-(def allowed-commands #{:help :standings :scoreboard :schedule :vs :roster :leaders})
+(def allowed-commands #{:help :standings :scoreboard :schedule :vs :roster
+                        :leaders :transactions})
 (def help-message
   "```
 Fantasy Sports Discord Bot

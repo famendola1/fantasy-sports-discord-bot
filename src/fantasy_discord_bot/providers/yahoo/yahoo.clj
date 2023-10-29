@@ -280,11 +280,51 @@
       {:header (format "Leaders - %s" date)
        :body (s/join "\n" (map format-leaders leaders))})))
 
+(defn- format-transaction-player
+  [player]
+  (format "%s (%s)"
+          (get-in player [:player :name :full])
+          (cond
+            (= "waivers" (get-in player [:player :transaction_data :source_type])) "W"
+            (= "waivers" (get-in player [:player :transaction_data :destination_type])) "W"
+            (= "freeagents" (get-in player [:player :transaction_data :source_type])) "FA"
+            (= "freeagents" (get-in player [:player :transaction_data :destination_type])) "FA")))
+
+(defn- format-transaction
+  [transaction]
+  (let [players (get-in transaction [:transaction :players])
+        team (or (get-in (first players) [:player :transaction_data :source_team_name])
+                 (get-in (first players) [:player :transaction_data :destination_team_name]))
+        team-and-bid (str team
+                          (if (:faab_bid (:transaction transaction))
+                            (format " - $%s" (:faab_bid (:transaction transaction)))
+                            ""))]
+    (format
+     "%s\n%s\n%s\n"
+     team-and-bid
+     (apply str (repeat (count team-and-bid) "-"))
+     (s/join "\n"
+             (map #(format
+                    "%s %s"
+                    (if (= "add" (get-in % [:player :transaction_data :type])) "+" "-")
+                    (format-transaction-player %))
+                  players)))))
+
+(defmethod handle-command :transactions
+  [sport league-id auth cmd]
+  (let [resp ((yq/get-add-drops (name sport) league-id 10) auth)]
+    (if (seq (:error resp))
+      (format-error-message (get-in resp [:error :description]))
+      {:header "Recent Transactions"
+       :body (s/join
+              "\n"
+              (map format-transaction (get-in resp [:fantasy_content :league :transactions])))})))
+
 (defn init-provider
-"Initializes the Yahoo provider for handling commands the bot receives."
-[config]
-(fn [cmd]
-  (handle-command (:sport config)
-                  (:league-id config)
-                  (:auth config)
-                  cmd)))
+  "Initializes the Yahoo provider for handling commands the bot receives."
+  [config]
+  (fn [cmd]
+    (handle-command (:sport config)
+                    (:league-id config)
+                    (:auth config)
+                    cmd)))

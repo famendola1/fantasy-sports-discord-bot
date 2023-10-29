@@ -83,6 +83,7 @@
                   :roster)))
 
 (defn get-stat-category-leaders
+  "Queries Yahoo's fantasy API for the current leaders of a stat for a certain date."
   [game stat-id date limit]  
   (q/ask (q/query YAHOO_FANTASY_API_ENDPOINT
                   :game
@@ -93,3 +94,12 @@
                              :count limit}]
                   [:stats {:type "date"
                            :date date}])))
+
+(defn get-add-drops
+  "Queries Yahoo's fantasy API for the last `count` add/drop transactions."
+  [game league-id count]
+  (q/ask (q/query YAHOO_FANTASY_API_ENDPOINT
+                  :league
+                  (keyword (mk-league-key game league-id))
+                  [:transactions {:types "add,drop"
+                                  :count count}] )))
