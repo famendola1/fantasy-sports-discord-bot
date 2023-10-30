@@ -44,12 +44,12 @@
 (defn- format-team-standings
   "Format the standings for a team into a string."
   [team]
-  (format "%2d: %s (%d-%d-%d)"
+  (format "%s: %s (%s-%s-%s)"
           (get-in team [:team :team_standings :rank])
           (get-in team [:team :name])
-          (get-in team [:team :team_standings :wins] 0)
-          (get-in team [:team :team_standings :losses] 0)
-          (get-in team [:team :team_standings :ties] 0)))
+          (get-in team [:team :team_standings :outcome_totals :wins] 0)
+          (get-in team [:team :team_standings :outcome_totals :losses] 0)
+          (get-in team [:team :team_standings :outcome_totals :ties] 0)))
 
 (defn- format-matchup
   "Format a matchup into a string."
@@ -65,9 +65,9 @@
         away-team (:team (second (get-in matchup [:matchup :teams])))]
     (format "%s (%d)\n%s (%d)\n"
             (:name home-team)
-            (result (:team_key home-team))
+            (or (result (:team_key home-team)) 0)
             (:name away-team)
-            (result (:team_key away-team)))))
+            (or (result (:team_key away-team)) 0))))
 
 (defn- format-matchup-result
   [team matchup]
