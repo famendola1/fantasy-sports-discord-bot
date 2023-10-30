@@ -1,6 +1,5 @@
 (ns fantasy-discord-bot.providers.yahoo.yahoo
-  (:require [clj-time.format :as f]
-            [clj-time.local :as l]
+  (:require [clj-time.local :as l]
             [clojure.string :as s]
             [fantasy-discord-bot.providers.yahoo.constants :as c]
             [fantasy-discord-bot.providers.yahoo.yquery :as yq]))
@@ -273,7 +272,7 @@
 
 (defmethod handle-command :leaders
   [sport _ auth cmd]
-  (let [date (f/unparse (f/formatter "yyyy-MM-dd") (l/local-now))
+  (let [date (l/format-local-time (l/local-now) :date)
         leaders (get-leaders sport date auth)]
     (if (some nil? leaders)
       (format-error-message "Unable to compute stats leaders.")
