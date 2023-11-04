@@ -1,5 +1,6 @@
 (ns fantasy-discord-bot.providers.yahoo.yahoo
-  (:require [clj-time.core :as t]
+  (:require [clj-time.coerce :as co]
+            [clj-time.core :as t]
             [clj-time.format :as f]
             [clojure.string :as s]
             [fantasy-discord-bot.providers.yahoo.constants :as c]
@@ -298,11 +299,16 @@
         team-and-bid (str team
                           (if (:faab_bid (:transaction transaction))
                             (format " - $%s" (:faab_bid (:transaction transaction)))
-                            ""))]
+                            ""))
+        date (f/unparse (f/formatters :date)
+                        (co/from-epoch
+                         (Long/parseLong
+                          (get-in transaction [:transaction :timestamp]))))]
     (format
-     "%s\n%s\n%s\n"
+     "%s: %s\n%s\n%s\n"
+     date
      team-and-bid
-     (apply str (repeat (count team-and-bid) "-"))
+     (apply str (repeat (+ (count date ) (count team-and-bid) 2) "-"))
      (s/join "\n"
              (map #(format
                     "%s %s"
